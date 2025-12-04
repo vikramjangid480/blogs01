@@ -14,7 +14,7 @@ const BlogCard = ({ blog, featured = false }) => {
     <Link href={`/${blog.slug}`}>
       <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 transform hover:-translate-y-1 cursor-pointer">
         {/* Image */}
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative h-48 overflow-hidden cursor-pointer">
         {blog.featured_image ? (
           <Image
             src={utils.getImageUrl(blog.featured_image)}

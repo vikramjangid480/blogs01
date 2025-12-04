@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Link from "next/link";
-import Image from 'next/image'
+import Image from "next/image";
 import HeroBanner from "../components/HeroBanner";
 import CategoryFilter from "../components/CategoryFilter";
 import Header from "../components/Header";
@@ -45,7 +45,7 @@ const HomePage = ({ initialData, banners: initialBanners }) => {
       fetchData();
     }
   }, [selectedCategory, tag, search, router.isReady]);
-  
+
   // Always fetch fresh data on client-side to ensure proper URLs
   useEffect(() => {
     if (!loading && (!blogs.length || !featuredBlogs.length)) {
@@ -65,23 +65,24 @@ const HomePage = ({ initialData, banners: initialBanners }) => {
       if (search) params.search = search;
 
       // Fetch all data in parallel
-      const [allBlogsResponse, featuredResponse, bannersResponse] = await Promise.all([
-        blogAPI.getBlogs(params),
-        blogAPI.getBlogs({ ...params, featured: true }),
-        bannerAPI.getBanners().catch(() => ({ banners: [] }))
-      ]);
+      const [allBlogsResponse, featuredResponse, bannersResponse] =
+        await Promise.all([
+          blogAPI.getBlogs(params),
+          blogAPI.getBlogs({ ...params, featured: true }),
+          bannerAPI.getBanners().catch(() => ({ banners: [] })),
+        ]);
 
       setBlogs(allBlogsResponse.blogs || []);
       setFeaturedBlogs(featuredResponse.blogs || []);
       setLatestBlogs(allBlogsResponse.blogs || []);
-      
+
       // Fetch popular blogs (using featured as proxy for popular)
       const popularResponse = await blogAPI.getBlogs({
         featured: true,
-        limit: 4,
+        limit: 7,
       });
-      setPopularBlogs(popularResponse.blogs || []);
-      
+      setPopularBlogs((popularResponse.blogs || []).slice(0, 7));
+
       setBanners(bannersResponse.banners || []);
     } catch (err) {
       setError("Failed to load content. Please try again.");
@@ -92,7 +93,6 @@ const HomePage = ({ initialData, banners: initialBanners }) => {
 
   const handleCategorySelect = (categorySlug) => {
     setSelectedCategory(categorySlug);
-    
   };
 
   const displayFeaturedBlogs = featuredBlogs.slice(0, INITIAL_DISPLAY_COUNT);
@@ -195,12 +195,14 @@ const HomePage = ({ initialData, banners: initialBanners }) => {
                                   alt={blog.title}
                                   className="w-16 h-16 object-cover rounded-lg"
                                   onError={(e) => {
-                                    e.target.style.display = 'none';
+                                    e.target.style.display = "none";
                                   }}
                                 />
                               ) : (
                                 <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
-                                  <span className="text-white text-sm font-bold">📚</span>
+                                  <span className="text-white text-sm font-bold">
+                                    📚
+                                  </span>
                                 </div>
                               )}
                             </div>
@@ -282,37 +284,46 @@ const HomePage = ({ initialData, banners: initialBanners }) => {
                               >
                                 <article className="bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 h-full transform group-hover:-translate-y-2">
                                   {/* Image Container with Overlay */}
-                                  <div className="relative h-56 overflow-hidden">
-                                    {blog.featured_image ? (
-                                      <Image
-                                        src={utils.getImageUrl(blog.featured_image)}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        alt={blog.title}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        onError={(e) => {
-                                          e.target.style.display = 'none';
-                                        }}
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-                                        <span className="text-white text-4xl font-bold">📖</span>
-                                      </div>
-                                    )}
-
-                                    {/* Category Badge */}
-                                    {blog.category && (
-                                      <div className="absolute top-4 right-4">
-                                        <Link
-                                          href={`/category/${blog.category.slug}`}
-                                        >
-                                          <span className="bg-white/90 backdrop-blur-sm text-navy-800 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-white transition-colors shadow-lg">
-                                            {blog.category.name}
+                                  <Link
+                                    href={`/${blog.slug}`}
+                                    className="block"
+                                  >
+                                    <div className="relative h-56 overflow-hidden cursor-pointer">
+                                      {blog.featured_image ? (
+                                        <Image
+                                          src={utils.getImageUrl(
+                                            blog.featured_image
+                                          )}
+                                          fill
+                                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                          alt={blog.title}
+                                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                          onError={(e) => {
+                                            e.target.style.display = "none";
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                                          <span className="text-white text-4xl font-bold">
+                                            📚
                                           </span>
-                                        </Link>
-                                      </div>
-                                    )}
-                                  </div>
+                                        </div>
+                                      )}
+
+                                      {/* Category Badge */}
+                                      {blog.category && (
+                                        <div
+                                          className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-navy-800 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-white transition-colors shadow-lg"
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // prevent card click
+                                            window.location.href = `/category/${blog.category.slug}`;
+                                          }}
+                                        >
+                                          {blog.category.name}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </Link>
 
                                   {/* Content */}
                                   <div className="p-6">
@@ -490,38 +501,42 @@ const HomePage = ({ initialData, banners: initialBanners }) => {
                                 className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 transform hover:-translate-y-1"
                               >
                                 {/* Image Container */}
-                                <div className="relative h-48 overflow-hidden">
-                                  {blog.featured_image ? (
-                                    <Image
-                                      src={utils.getImageUrl(blog.featured_image)}
-                                      fill
-                                      alt={blog.title}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                      onError={(e) => {
-                                        e.target.style.display = 'none';
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-                                      <span className="text-white text-3xl font-bold">📚</span>
-                                    </div>
-                                  )}
-
-                                  {/* Category Badge */}
-                                  {blog.category && (
-                                    <div className="absolute top-3 left-3">
-                                      <Link
-                                        href={`/category/${blog.category.slug}`}
-                                      >
-                                        <span className="bg-white/90 backdrop-blur-sm text-navy-800 px-2.5 py-1 rounded-full text-xs font-semibold hover:bg-white transition-colors shadow-lg">
-                                          {blog.category.name}
+                                <Link href={`/${blog.slug}`} className="block">
+                                  <div className="relative h-48 overflow-hidden ">
+                                    {blog.featured_image ? (
+                                      <Image
+                                        src={utils.getImageUrl(
+                                          blog.featured_image
+                                        )}
+                                        fill
+                                        alt={blog.title}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        onError={(e) => {
+                                          e.target.style.display = "none";
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+                                        <span className="text-white text-3xl font-bold">
+                                          📚
                                         </span>
-                                      </Link>
-                                    </div>
-                                  )}
+                                      </div>
+                                    )}
 
-                                  {/* Featured Indicator - Removed */}
-                                </div>
+                                    {/* Category Badge */}
+                                    {blog.category && (
+                                      <div
+                                        className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-navy-800 px-2.5 py-1 rounded-full text-xs font-semibold hover:bg-white transition-colors shadow-lg cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // prevent triggering parent card click
+                                          window.location.href = `/category/${blog.category.slug}`;
+                                        }}
+                                      >
+                                        {blog.category.name}
+                                      </div>
+                                    )}
+                                  </div>
+                                </Link>
 
                                 {/* Content */}
                                 <div className="p-6">
@@ -628,44 +643,44 @@ export async function getServerSideProps(context) {
   try {
     // Determine API base URL - supports both localhost and production
     let baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
+
     if (!baseUrl) {
       // If no env variable, use boganto.com for production
-      baseUrl = 'https://boganto.com';
+      baseUrl = "https://boganto.com";
     }
-    
+
     const [blogsRes, featuredRes, bannersRes] = await Promise.all([
       fetch(`${baseUrl}/api/blogs`).catch(() => ({ ok: false })),
       fetch(`${baseUrl}/api/blogs?featured=true`).catch(() => ({ ok: false })),
-      fetch(`${baseUrl}/api/banner`).catch(() => ({ ok: false }))
+      fetch(`${baseUrl}/api/banner`).catch(() => ({ ok: false })),
     ]);
-    
+
     let blogs = [];
     let featuredBlogs = [];
     let banners = [];
-    
+
     if (blogsRes.ok) {
       const blogsData = await blogsRes.json();
       blogs = blogsData.blogs || [];
     }
-    
+
     if (featuredRes.ok) {
       const featuredData = await featuredRes.json();
       featuredBlogs = featuredData.blogs || [];
     }
-    
+
     if (bannersRes.ok) {
       const bannersData = await bannersRes.json();
       banners = bannersData.banners || [];
     }
-    
+
     return {
       props: {
         initialData: {
           blogs,
           featuredBlogs,
           latestBlogs: blogs,
-          popularBlogs: featuredBlogs,
+          popularBlogs: featuredBlogs.slice(0, 7),
         },
         banners,
       },
